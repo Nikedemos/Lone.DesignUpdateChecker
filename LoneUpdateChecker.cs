@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using Oxide.Core;
 using Oxide.Core.Plugins;
 using System;
@@ -8,27 +10,36 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.4")]
+    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.5")]
     [Description("Checks for available updates of Lone.design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
         #region CONST/STATIC
         public const string API_URL = "https://api.lone.design/";
 
+        public const string DiscordMessageUpdate = "{0}/messages/{1}";
+        public const string DiscordMessageCrate = "{0}?wait=true";
+
         public static LoneUpdateChecker Instance;
 
         public static Hash<string, VersionNumber> CurrentPluginVersions;
 
         public static StringBuilder StringBuilderInstance;
+        public static StringBuilder StringBuilderDiscordInstance;
         public static ApiResponse RecentApiResponse;
         public static JsonSerializerSettings ErrorHandling;
 
         public static VersionNumber InvalidVersionNumber;
 
         public static Timer RequestTimer;
+        private StoredData storedData;
         #endregion
 
         #region HOOKS
+        private void Init()
+        {
+            storedData = Interface.Oxide.DataFileSystem.ReadObject<StoredData>(Name);
+        }
         private void OnServerInitialized()
         {
             timer.Once(1F, OnServerInitializedAfterDelay);
@@ -46,7 +57,6 @@ namespace Oxide.Plugins
             ProcessConfigData();
 
             RequestSend();
-
 
             if (Configuration.CheckForUpdatesPeriodically)
             {
@@ -67,6 +77,8 @@ namespace Oxide.Plugins
             {
                 RequestTimer.Destroy();
             }
+
+            Interface.Oxide.DataFileSystem.WriteObject(Name, storedData);
 
             RequestTimer = null;
             StringBuilderInstance = null;
@@ -126,11 +138,11 @@ namespace Oxide.Plugins
                 needsSave = true;
             }
 
-            if (Configuration.HowManyMinutesBetweenPeriodicalUpdates < 30)
-            {
-                Configuration.HowManyMinutesBetweenPeriodicalUpdates = 30;
-                needsSave = true;
-            }
+            //if (Configuration.HowManyMinutesBetweenPeriodicalUpdates < 30)
+            //{
+            //    Configuration.HowManyMinutesBetweenPeriodicalUpdates = 30;
+            //    needsSave = true;
+            //}
             if(Configuration.EnableSendingNotificationsToDiscord && string.IsNullOrWhiteSpace(Configuration.WebHookForSendingNotificationsToDiscord))
             {
                 Configuration.EnableSendingNotificationsToDiscord = false;
@@ -217,6 +229,8 @@ namespace Oxide.Plugins
 
         public static void RequestCallbackCommon(int code, string response, bool single)
         {
+            Instance.PrintWarning(response);
+            Instance.PrintWarning(code.ToString());
             if (code != 200)
             {
                 Instance.PrintError($"ERROR HANDLING RESPONSE FROM THE API.\nHTTP CODE {code}:\n{response}\n");
@@ -270,46 +284,31 @@ namespace Oxide.Plugins
 
                 if (versionFromAPI == InvalidVersionNumber)
                 {
-                    StringBuilderInstance.AppendLine($"{currentInfo.PluginName}: ERROR! API returned an invalid version number {currentInfo.Version}");
+                    StringBuilderInstance.AppendLine($"**{currentInfo.PluginName}**: ERROR! API returned an invalid version number {currentInfo.Version}");
                     continue;
                 }
 
                 if (versionFromAPI > versionPresent)
                 {
-                    StringBuilderInstance.AppendLine($"{currentInfo.Name}: out of date! You have version {versionPresent} installed, but the newest one is {versionFromAPI}!");
+                    StringBuilderInstance.AppendLine($"**{currentInfo.Name}**: out of date! Installed version {versionPresent}, new version {versionFromAPI}!");
                     
                     outdatedPluginsFound++;
-                }
-                else
-                {
-                    if (versionFromAPI == versionPresent)
-                    {
-                        StringBuilderInstance.AppendLine($"{currentInfo.PluginName}: OK. You have the most recent version {versionPresent} installed.");
-                    }
-                    else
-                    {
-                        StringBuilderInstance.AppendLine($"{currentInfo.PluginName}: OK. You seem to have a not-yet-released version {versionPresent} installed.");
-                    }
-                }
+                } 
             }
 
             StringBuilderInstance.AppendLine();
             if (outdatedPluginsFound > 0)
             {
-                Instance.PrintError(StringBuilderInstance.ToString());
+                Instance.PrintError(StringBuilderInstance.ToString().Replace("*", string.Empty));
                 if (Instance.Configuration.EnableSendingNotificationsToDiscord)
-                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? " " : "Found updates for at least 1 Lone.design plugin, check above!");
+                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? "Загруженный плагин нуждается в обновлении" : "Found updates for at least 1 Lone.design plugin, check above!");
                 if (!single)
                     Instance.PrintWarning("Found updates for at least 1 Lone.design plugin, check above!\n");           
             }
             else
             {
-                Instance.PrintWarning(StringBuilderInstance.ToString());
-                if(Instance.Configuration.EnableSendingNotificationsToDiscord)
-                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? "" : "All your Lone.design plugins seem up to date.");
                 if (!single)
                     Instance.PrintWarning("All your Lone.design plugins seem up to date.");
-
             }
 
             return;
@@ -371,12 +370,27 @@ namespace Oxide.Plugins
         {
             List<Fields> fields = new List<Fields> { new Fields(title, message, true),};
 
-            Instance.webrequest.Enqueue(Instance.Configuration.WebHookForSendingNotificationsToDiscord, 
+            StringBuilderInstance.Clear();
+            bool data = Instance.storedData.DoesItExistMessageId();
+            Core.Libraries.RequestMethod requestMethod = data == false ? Core.Libraries.RequestMethod.PATCH : Core.Libraries.RequestMethod.POST;
+            string uri = data ? StringBuilderInstance.AppendFormat(DiscordMessageCrate, Instance.Configuration.WebHookForSendingNotificationsToDiscord).ToString() : StringBuilderInstance.AppendFormat(DiscordMessageUpdate, Instance.Configuration.WebHookForSendingNotificationsToDiscord, Instance.storedData.LastMessageId).ToString();
+            Instance.webrequest.Enqueue(uri, 
                 new FancyMessage(null, new FancyMessage.Embeds[1] { 
-                    new FancyMessage.Embeds("Lone Update Checker", 2105893, fields, 
+                    new FancyMessage.Embeds("Lone Update Checker", 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields, 
                     new Footer("lone.design", "https://lone.design/wp-content/uploads/2020/03/cropped-Blackwolf-32x32.png"), 
-                    new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png")) }).toJSON(), (code, response) => { }, Instance,
-            Core.Libraries.RequestMethod.POST, new Dictionary<string, string> { { "Content-Type", "application/json" } });
+                    new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png"))}).toJSON(), (code, response) => 
+                    {
+                        if(code == 200 && response != null)
+                        {
+                            Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"];
+                        }
+                        else
+                        {
+                            Instance.storedData.LastMessageId = string.Empty;
+                            SendDiscordMessage(message, title);
+                        }
+                    }, Instance,
+            requestMethod, new Dictionary<string, string> { { "Content-Type", "application/json" } }, 10F);
         }
         public class FancyMessage
         {
@@ -386,14 +400,16 @@ namespace Oxide.Plugins
             {
                 public string title {get; set;}
                 public int color {get; set;}
+                public string timestamp { get; set; }
                 public List<Fields> fields {get; set;}
                 public Footer footer {get; set;}
                 public Thumbnail thumbnail { get; set;}
 
-                public Embeds(string title, int color, List<Fields> fields, Footer footer, Thumbnail thumbnail)
+                public Embeds(string title, int color, string timestamp, List<Fields> fields, Footer footer, Thumbnail thumbnail)
                 {
                     this.title = title;
                     this.color = color;
+                    this.timestamp = timestamp;
                     this.fields = fields;
                     this.footer = footer;
                     this.thumbnail = thumbnail;
@@ -474,6 +490,17 @@ namespace Oxide.Plugins
             return new VersionNumber(major, minor, patch);
         }
         public static bool IsObjectNull(object obj) => ReferenceEquals(obj, null);
+        #endregion
+
+        #region DATA
+        private class StoredData
+        {
+            public string LastMessageId { get; set; }
+            public bool DoesItExistMessageId()
+            {
+                return string.IsNullOrEmpty(LastMessageId);
+            }
+        }
         #endregion
     }
 }
