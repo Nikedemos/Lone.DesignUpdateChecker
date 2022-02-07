@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.6")]
+    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.7")]
     [Description("Checks for available updates of Lone.design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
@@ -137,12 +137,12 @@ namespace Oxide.Plugins
                 needsSave = true;
             }
 
-            //if (Configuration.HowManyMinutesBetweenPeriodicalUpdates < 30)
-            //{
-            //    Configuration.HowManyMinutesBetweenPeriodicalUpdates = 30;
-            //    needsSave = true;
-            //}
-            if(Configuration.EnableSendingNotificationsToDiscord && string.IsNullOrWhiteSpace(Configuration.WebHookForSendingNotificationsToDiscord))
+            if (Configuration.HowManyMinutesBetweenPeriodicalUpdates < 30)
+            {
+                Configuration.HowManyMinutesBetweenPeriodicalUpdates = 30;
+                needsSave = true;
+            }
+            if (Configuration.EnableSendingNotificationsToDiscord && string.IsNullOrWhiteSpace(Configuration.WebHookForSendingNotificationsToDiscord))
             {
                 Configuration.EnableSendingNotificationsToDiscord = false;
                 needsSave = true;
