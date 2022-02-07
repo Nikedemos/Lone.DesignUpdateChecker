@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.5")]
+    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.6")]
     [Description("Checks for available updates of Lone.design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
@@ -25,7 +25,6 @@ namespace Oxide.Plugins
         public static Hash<string, VersionNumber> CurrentPluginVersions;
 
         public static StringBuilder StringBuilderInstance;
-        public static StringBuilder StringBuilderDiscordInstance;
         public static ApiResponse RecentApiResponse;
         public static JsonSerializerSettings ErrorHandling;
 
@@ -229,8 +228,6 @@ namespace Oxide.Plugins
 
         public static void RequestCallbackCommon(int code, string response, bool single)
         {
-            Instance.PrintWarning(response);
-            Instance.PrintWarning(code.ToString());
             if (code != 200)
             {
                 Instance.PrintError($"ERROR HANDLING RESPONSE FROM THE API.\nHTTP CODE {code}:\n{response}\n");
@@ -301,7 +298,7 @@ namespace Oxide.Plugins
             {
                 Instance.PrintError(StringBuilderInstance.ToString().Replace("*", string.Empty));
                 if (Instance.Configuration.EnableSendingNotificationsToDiscord)
-                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? "Загруженный плагин нуждается в обновлении" : "Found updates for at least 1 Lone.design plugin, check above!");
+                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? "The installed plugin needs to be updated" : "Found updates for at least 1 Lone.design plugin, check above!");
                 if (!single)
                     Instance.PrintWarning("Found updates for at least 1 Lone.design plugin, check above!\n");           
             }
