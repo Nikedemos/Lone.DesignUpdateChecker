@@ -1,0 +1,20 @@
+{
+  "MSG_UPDATE_CHECK_FREQUENCY": "Обновления будут проверяться каждые {0} минут(ы)",
+  "MSG_CONFIG_GENERATING_DEFAULT": "Создание конфигурации по умолчанию...",
+  "MSG_CONFIG_JUST_UPDATED": "Похоже, вы только что обновились с {0} до {1}!",
+  "MSG_CONFIG_LOADING": "Загрузка файла конфигурации...",
+  "MSG_CONFIG_ERROR_FAILED_LOADING": "\nERROR: НЕ УДАЛОСЬ ПРОЧИТАТЬ КОНФИГУРАЦИОННЫЙ ФАЙЛ!\n{0}\n{1}\nПовторная генерация конфигурации по умолчанию...\n",
+  "MSG_CONFIG_ERROR_NULL_CONFIG": "\nERROR: ОШИБКА В КОНФИГУРАЦИИ!\nПовторная генерация конфигурации по умолчанию...\n",
+  "MSG_UPDATE_CHECKING_ALL": "Проверка всех плагинов на обновления...",
+  "MSG_UPDATE_CHECKING_PLUGIN": "{0} был только что загружен, проверяем наличие обновления...",
+  "MSG_PLUGIN_RESPONSE_ERROR": "ERROR HANDLING RESPONSE FROM THE API.\nHTTP CODE {0}\nRESPONSE FROM SERVER:\n{1}\n",
+  "MSG_PLUGIN_DESERIALIZATION_ERROR": "ERROR: COULD NOT DESERIALIZE THE RESPONSE FROM THE API:\nHTTP CODE {0}\nRESPONSE FROM SERVER:\n{1}\n\nThe following seems to be the issue:\n{2}\n{3}\n",
+  "MSG_NO_LONE_PLUGINS_INSTALLED": "Не похоже, что у вас установлены какие-либо плагины Lone.design (или плагины, которые вы используете, неправильно настроили метаданные страницы продукта). Получите несколько первоклассных плагинов на https://lone.design или сообщите разработчикам плагинов, что их плагин Lone.design не отображается в базе данных.",
+  "MSG_PLUGIN_NOT_IN_LONE_DB": "Не похоже, что этот плагин существует в базе данных Lone.design. Возможно, это не единственный плагин, или разработчик плагина неправильно настроил метаданные страницы продукта.",
+  "MSG_PLUGIN_REPONSE_INVALID_VERSION": "**{0}**: ERROR! API вернул неверный номер версии{1}",
+  "MSG_PLUGIN_RESPONSE_OUTDATED_VERSION": "**{0}**: устарел! Установленная версия {1}, новая версия {2}!",
+  "MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE": "{0} нуждается в обновлении. Установленная версия {1}, новая версия {2}",
+  "MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK": "Найдены обновления по крайней мере для 1 плагина Lone.design, проверьте выше!",
+  "MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE": "Все ваши плагины с Lone.Design не нуждаются в обновлении.",
+  "MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE": "{0} не нуждается в обновлении."
+}
