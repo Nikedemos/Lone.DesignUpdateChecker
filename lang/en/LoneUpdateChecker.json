@@ -1,0 +1,20 @@
+{
+  "MSG_UPDATE_CHECK_FREQUENCY": "The updates will be checked every {0} minute(s)",
+  "MSG_CONFIG_GENERATING_DEFAULT": "Generating default config...",
+  "MSG_CONFIG_JUST_UPDATED": "It looks like you have just updated from {0} to {1}!",
+  "MSG_CONFIG_LOADING": "Loading configuration file...",
+  "MSG_CONFIG_ERROR_FAILED_LOADING": "\nERROR: COULD NOT READ THE CONFIG FILE!\n{0}\n{1}\nRe-generating default config...\n",
+  "MSG_CONFIG_ERROR_NULL_CONFIG": "\nERROR: CONFIG IS NULL!\nRe-generating default config...\n",
+  "MSG_UPDATE_CHECKING_ALL": "Checking for all plugin updates...",
+  "MSG_UPDATE_CHECKING_PLUGIN": "{0} was just loaded in, checking for updates...",
+  "MSG_PLUGIN_RESPONSE_ERROR": "ERROR HANDLING RESPONSE FROM THE API.\nHTTP CODE {0}\nRESPONSE FROM SERVER:\n{1}\n",
+  "MSG_PLUGIN_DESERIALIZATION_ERROR": "ERROR: COULD NOT DESERIALIZE THE RESPONSE FROM THE API:\nHTTP CODE {0}\nRESPONSE FROM SERVER:\n{1}\n\nThe following seems to be the issue:\n{2}\n{3}\n",
+  "MSG_NO_LONE_PLUGINS_INSTALLED": "It doesn't look like you have any Lone.design plugins installed (or the plugins that you do, have not had their product page metadata set up correctly). Get some top-notch plugins at https://lone.design and/or let the plugin devs know that their Lone.design plugin is not showing up in the database.",
+  "MSG_PLUGIN_NOT_IN_LONE_DB": "It doesn't look like this plugin exists in the Lone.design database. It might not be a Lone plugin or the plugin dev has not had their product page metadata set up correctly.",
+  "MSG_PLUGIN_REPONSE_INVALID_VERSION": "**{0}**: ERROR! API returned an invalid version number {1}",
+  "MSG_PLUGIN_RESPONSE_OUTDATED_VERSION": "**{0}**: out of date! Installed version {1}, new version {2}!",
+  "MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE": "{0} needs to be updated. Installed version {1}, new version {2}",
+  "MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK": "Found updates for at least 1 Lone.design plugin, check above!",
+  "MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE": "All your Lone.Design plugins seem up to date.",
+  "MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE": "{0} plugin is up to date."
+}

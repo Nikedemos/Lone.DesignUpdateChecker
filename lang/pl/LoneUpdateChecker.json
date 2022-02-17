@@ -1,0 +1,20 @@
+{
+  "MSG_UPDATE_CHECK_FREQUENCY": "Aktualizacje będą sprawdzane co {0} minut(y)",
+  "MSG_CONFIG_GENERATING_DEFAULT": "Generowanie domyślnej konfiguracji...",
+  "MSG_CONFIG_JUST_UPDATED": "Dokonano aktualizacji z wersji {0} do {1}!",
+  "MSG_CONFIG_LOADING": "Ładowanie pliku konfiguracji...",
+  "MSG_CONFIG_ERROR_FAILED_LOADING": "\nBŁĄD: NIE MOŻNA ODCZYTAĆ PLIKU KONFIGURACJI!\n{0}\n{1}\nRegenerowanie domyślnej konfiguracji...\n",
+  "MSG_CONFIG_ERROR_NULL_CONFIG": "\nBŁĄD: KONFIGURACJA JEST PUSTA!\nRegenerowanie domyślnej konfiguracji...\n",
+  "MSG_UPDATE_CHECKING_ALL": "Sprawdzanie aktualizacji dla wszystkich wtyczek...",
+  "MSG_UPDATE_CHECKING_PLUGIN": "Załadowano {0}, sprawdzanie aktualizacji...",
+  "MSG_PLUGIN_RESPONSE_ERROR": "BŁĄD W PRZETWARZANIU ODPOWIEDZI Z API.\nKOD HTTP {0}\nODPOWIEDŹ SERWERA:\n{1}\n",
+  "MSG_PLUGIN_DESERIALIZATION_ERROR": "BŁAD: PROBLEM W DESERIALIZOWANIU ODPOWIEDZI Z API.\nKOD HTTP {0}\nODPOWIEDŹ SERWERA:\n{1}\n\nPoniżej pełny wykaz błędu:\n{2}\n{3}\n",
+  "MSG_NO_LONE_PLUGINS_INSTALLED": "Nie wygląda na to, by były zainstalowane jakiekolwiek wtyczki z Lone.Design (lub te, które są zainstalowane, nie skonfigurwały poprawnie witryny produktu). Pobierz wtyczki z górnej półki na https://lone.design i/lub daj znać deweloperom, że wtyczka z Lone.design nie widnieje w bazie danych.",
+  "MSG_PLUGIN_NOT_IN_LONE_DB": "Nie wygląda na to, by ta wtyczka widniała w bazie danych. Być może nie jest to wtyczka z Lone.Design, bądź jej deweloper nie skonfigurował poprawnie witryny produktu.",
+  "MSG_PLUGIN_REPONSE_INVALID_VERSION": "**{0}**: BŁĄD! API zwróciło nieprawidłowy numer wersji {1}",
+  "MSG_PLUGIN_RESPONSE_OUTDATED_VERSION": "**{0}**: wymaga aktualizacji! Zainstalowano wersje {1}, nowa wersja to {2}!",
+  "MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE": "{0} wymaga aktualizacji. Installed version {1}, nowa wersja to {2}",
+  "MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK": "Znaleziono aktualizację dla co najmniej jednej wtyczki z Lone.Design, patrz powyżej!",
+  "MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE": "Żadna z twoich wtyczek z Lone.Design nie wymaga aktualizacji.",
+  "MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE": "{0} nie wymaga aktualizacji."
+}
