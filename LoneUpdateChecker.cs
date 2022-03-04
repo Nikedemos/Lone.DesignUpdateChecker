@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using Oxide.Core;
 using Oxide.Core.Plugins;
 using System;
@@ -9,15 +10,15 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone Update Checker", "Nikedemos & DezLife", "1.1.8")]
-    [Description("Checks for available updates of Lone.design plugins")]
+    [Info("Lone.Design Update Checker", "Nikedemos & DezLife", "1.2.1")]
+    [Description("Checks for available updates of Lone.Design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
         #region CONST/STATIC
         public const string API_URL = "https://api.lone.design/";
 
-        public const string DiscordMessageUpdate = "{0}/messages/{1}";
-        public const string DiscordMessageCrate = "{0}?wait=true";
+        public const string DISCORD_MSG_UPDATE = "{0}/messages/{1}";
+        public const string DISCORD_MSG_CREATE = "{0}?wait=true";
 
         public static LoneUpdateChecker Instance;
 
@@ -33,13 +34,77 @@ namespace Oxide.Plugins
         private StoredData storedData;
         #endregion
 
+        #region LANG
+        public const string MSG_UPDATE_CHECK_FREQUENCY = nameof(MSG_UPDATE_CHECK_FREQUENCY);
+        public const string MSG_CONFIG_GENERATING_DEFAULT = nameof(MSG_CONFIG_GENERATING_DEFAULT);
+        public const string MSG_CONFIG_JUST_UPDATED = nameof(MSG_CONFIG_JUST_UPDATED);
+        public const string MSG_CONFIG_LOADING = nameof(MSG_CONFIG_LOADING);
+        public const string MSG_CONFIG_ERROR_FAILED_LOADING = nameof(MSG_CONFIG_ERROR_FAILED_LOADING);
+        public const string MSG_CONFIG_ERROR_NULL_CONFIG = nameof(MSG_CONFIG_ERROR_NULL_CONFIG);
+        public const string MSG_UPDATE_CHECKING_ALL = nameof(MSG_UPDATE_CHECKING_ALL);
+        public const string MSG_UPDATE_CHECKING_PLUGIN = nameof(MSG_UPDATE_CHECKING_PLUGIN);
+        public const string MSG_PLUGIN_RESPONSE_ERROR = nameof(MSG_PLUGIN_RESPONSE_ERROR);
+        public const string MSG_PLUGIN_DESERIALIZATION_ERROR = nameof(MSG_PLUGIN_DESERIALIZATION_ERROR);
+        public const string MSG_NO_LONE_PLUGINS_INSTALLED = nameof(MSG_NO_LONE_PLUGINS_INSTALLED);
+        public const string MSG_PLUGIN_NOT_IN_LONE_DB = nameof(MSG_PLUGIN_NOT_IN_LONE_DB);
+        public const string MSG_PLUGIN_REPONSE_INVALID_VERSION = nameof(MSG_PLUGIN_REPONSE_INVALID_VERSION);
+        public const string MSG_PLUGIN_RESPONSE_OUTDATED_VERSION = nameof(MSG_PLUGIN_RESPONSE_OUTDATED_VERSION);
+        public const string MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE = nameof(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE);
+        public const string MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK = nameof(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK);
+
+        public const string MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE = nameof(MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE);
+        public const string MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE = nameof(MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE);
+
+        private static Dictionary<string, string> LangMessages = new Dictionary<string, string>
+        {
+            [MSG_UPDATE_CHECK_FREQUENCY] = "The updates will be checked every {0} minute(s)",
+            [MSG_CONFIG_GENERATING_DEFAULT] = "Generating default config...",
+            [MSG_CONFIG_JUST_UPDATED] = "It looks like you have just updated from {0} to {1}!",
+            [MSG_CONFIG_LOADING] = "Loading configuration file...",
+            [MSG_CONFIG_ERROR_FAILED_LOADING] = "\nERROR: COULD NOT READ THE CONFIG FILE!\n{0}\n{1}\nRe-generating default config...\n",
+            [MSG_CONFIG_ERROR_NULL_CONFIG] = "\nERROR: CONFIG IS NULL!\nRe-generating default config...\n",
+            [MSG_UPDATE_CHECKING_ALL] = "Checking for all plugin updates...",
+            [MSG_UPDATE_CHECKING_PLUGIN] = "{0} was just loaded in, checking for updates...",
+            [MSG_PLUGIN_RESPONSE_ERROR] = "ERROR HANDLING RESPONSE FROM THE API.\nHTTP CODE {0}\nRESPONSE FROM SERVER:\n{1}\n",
+            [MSG_PLUGIN_DESERIALIZATION_ERROR] = "ERROR: COULD NOT DESERIALIZE THE RESPONSE FROM THE API:\nHTTP CODE {0}\nRESPONSE FROM SERVER:\n{1}\n\nThe following seems to be the issue:\n{2}\n{3}\n",
+            [MSG_NO_LONE_PLUGINS_INSTALLED] = "It doesn't look like you have any Lone.Design plugins installed (or the plugins that you do, have not had their product page metadata set up correctly). Get some top-notch plugins at https://lone.design and/or let the plugin devs know that their Lone.Design plugin is not showing up in the database.",
+            [MSG_PLUGIN_NOT_IN_LONE_DB] = "It doesn't look like this plugin exists in the Lone.design database. It might not be a Lone.Design plugin or the plugin dev has not had their product page metadata set up correctly.",
+            [MSG_PLUGIN_REPONSE_INVALID_VERSION] = "**{0}**: ERROR! API returned an invalid version number {1}",
+            [MSG_PLUGIN_RESPONSE_OUTDATED_VERSION] = "**{0}**: out of date! Installed version {1}, new version {2}!",
+            [MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE] = "{0} needs to be updated. Installed version {1}, new version {2}",
+            [MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK] = "Found updates for at least 1 Lone.Design plugin, check above!",
+            [MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE] = "All your Lone.Design plugins seem up to date.",
+            [MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE] = "{0} is up to date."
+
+        };
+
+        private static string MSG(string msg, string userID = null, params object[] args)
+        {
+            if (args == null)
+            {
+                return Instance.lang.GetMessage(msg, Instance, userID);
+            }
+            else
+            {
+                return string.Format(Instance.lang.GetMessage(msg, Instance, userID), args);
+            }
+
+        }
+        #endregion
+
         #region HOOKS
         private void Init()
         {
             storedData = Interface.Oxide.DataFileSystem.ReadObject<StoredData>(Name);
+
+            //register here...
+            lang.RegisterMessages(LangMessages, this);
         }
         private void OnServerInitialized()
         {
+            //and also re-register here in case the plugin was hot-loaded after the server started
+            lang.RegisterMessages(LangMessages, this);
+
             timer.Once(1F, OnServerInitializedAfterDelay);
         }
 
@@ -58,8 +123,8 @@ namespace Oxide.Plugins
 
             if (Configuration.CheckForUpdatesPeriodically)
             {
-                uint everyMinute = Configuration.HowManyMinutesBetweenPeriodicalUpdates;
-                Instance.PrintWarning($"The updates will be checked every {everyMinute} minute(s)");
+                var everyMinute = Configuration.HowManyMinutesBetweenPeriodicalUpdates;
+                Instance.PrintWarning(MSG(MSG_UPDATE_CHECK_FREQUENCY, null, everyMinute));
                 RequestTimer = timer.Repeat(everyMinute * 60F, 14400, () => RequestSend());
             }
         }
@@ -119,7 +184,7 @@ namespace Oxide.Plugins
 
         protected override void LoadDefaultConfig()
         {
-            PrintWarning("Generating default config...");
+            PrintWarning(MSG(MSG_CONFIG_GENERATING_DEFAULT));
             Configuration = new ConfigData();
             SaveConfigData();
         }
@@ -130,7 +195,7 @@ namespace Oxide.Plugins
 
             if (Version != Configuration.Version)
             {
-                Instance.PrintWarning($"It looks like you have just updated {Title} from {Version} to {Configuration.Version}!");
+                Instance.PrintWarning(MSG(MSG_CONFIG_JUST_UPDATED, null, Configuration.Version, Version));
                 Configuration.Version = Version;
 
                 needsSave = true;
@@ -157,21 +222,21 @@ namespace Oxide.Plugins
         {
             bool needsSave = false;
 
-            PrintWarning("Loading configuration file...");
+            PrintWarning(MSG(MSG_CONFIG_LOADING));
             try
             {
                 Configuration = Config.ReadObject<ConfigData>();
             }
             catch (Exception e)
             {
-                Instance.PrintError($"\nERROR: COULD NOT READ THE CONFIG FILE!\n{e.Message}\n{e.StackTrace}\nGenerating default config...\n");
+                Instance.PrintError(MSG(MSG_CONFIG_ERROR_FAILED_LOADING, null, e.Message, e.StackTrace));
                 Configuration = new ConfigData();
                 needsSave = true;
             }
 
             if (IsObjectNull(Configuration))
             {
-                Instance.PrintError($"\nERROR: CONFIG IS NULL!\nGenerating default config...\n");
+                Instance.PrintError(MSG(MSG_CONFIG_ERROR_NULL_CONFIG));
                 needsSave = true;
             }
 
@@ -210,12 +275,12 @@ namespace Oxide.Plugins
             if (requestPlugins == default(string))
             {
                 callback = RequestCallbackBulk;
-                Instance.PrintWarning("Checking for all plugin updates...");
+                Instance.PrintWarning(MSG(MSG_UPDATE_CHECKING_ALL));
             }
             else
             {
                 callback = RequestCallbackSingle;
-                Instance.PrintWarning($"{requestPlugins} was just loaded in, checking for updates...");
+                Instance.PrintWarning(MSG(MSG_UPDATE_CHECKING_PLUGIN, null, requestPlugins));
             }
 
             RecentApiResponse = null;
@@ -229,7 +294,7 @@ namespace Oxide.Plugins
         {
             if (code != 200)
             {
-                Instance.PrintError($"ERROR HANDLING RESPONSE FROM THE API.\nHTTP CODE {code}:\n{response}\n");
+                Instance.PrintError(MSG(MSG_PLUGIN_RESPONSE_ERROR, null, code, response));
                 return;
             }
 
@@ -239,7 +304,7 @@ namespace Oxide.Plugins
             }
             catch (Exception e)
             {
-                Instance.PrintError($"ERROR: COULD NOT DESERIALIZE THE RESPONSE FROM THE API:\n{response}\nThe following seems to be the issue:\n{e.Message}\n{e.StackTrace}\n");
+                Instance.PrintError(MSG(MSG_PLUGIN_DESERIALIZATION_ERROR, null, code, response, e.Message, e.StackTrace));
                 return;
             }
 
@@ -247,11 +312,11 @@ namespace Oxide.Plugins
             {
                 if (!single)
                 {
-                    Instance.PrintWarning($"It doesn't look like you have any Lone.design plugins installed (or the plugins that you do, have not had their product page metadata set up correctly). Get some top-notch plugins at https://lone.design and/or let the plugin devs know that their Lone.design plugin is not showing up in the database.");
+                    Instance.PrintWarning(MSG(MSG_NO_LONE_PLUGINS_INSTALLED));
                 }
                 else
                 {
-                    Instance.PrintWarning($"It doesn't look like this plugin exists in the Lone.design database. It might not be a Lone plugin or the plugin dev has not had their product page metadata set up correctly.");
+                    Instance.PrintWarning(MSG(MSG_PLUGIN_NOT_IN_LONE_DB));
                 }
 
                 return;
@@ -266,7 +331,9 @@ namespace Oxide.Plugins
             StringBuilderInstance.Clear();
             StringBuilderInstance.AppendLine();
 
-            for (int i = 0; i < RecentApiResponse.Count; i++)
+            string lastSingle = "";
+
+            for (var i = 0; i < RecentApiResponse.Count; i++)
             {
                 currentInfo = RecentApiResponse[i];
 
@@ -278,15 +345,17 @@ namespace Oxide.Plugins
                 versionPresent = CurrentPluginVersions[currentInfo.PluginName];
                 versionFromAPI = VersionNumberFromString(currentInfo.Version);
 
+                lastSingle = currentInfo.PluginName;
+
                 if (versionFromAPI == InvalidVersionNumber)
                 {
-                    StringBuilderInstance.AppendLine($"**{currentInfo.PluginName}**: ERROR! API returned an invalid version number {currentInfo.Version}");
+                    StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_REPONSE_INVALID_VERSION, null, currentInfo.PluginName, currentInfo.Version));
                     continue;
                 }
 
                 if (versionFromAPI > versionPresent)
                 {
-                    StringBuilderInstance.AppendLine($"**{currentInfo.Name}**: out of date! Installed version {versionPresent}, new version {versionFromAPI}!");
+                    StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_RESPONSE_OUTDATED_VERSION, null, currentInfo.PluginName, versionPresent, versionFromAPI));
 
                     outdatedPluginsFound++;
                 }
@@ -297,28 +366,20 @@ namespace Oxide.Plugins
             {
                 Instance.PrintError(StringBuilderInstance.ToString().Replace("*", string.Empty));
                 if (Instance.Configuration.EnableSendingNotificationsToDiscord)
-                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? "The installed plugin needs to be updated" : "Found updates for at least 1 Lone.design plugin, check above!");
-                if (!single)
-                    Instance.PrintWarning("Found updates for at least 1 Lone.design plugin, check above!\n");
+                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
+
+                Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
             }
             else
             {
-                if (!single)
-                    Instance.PrintWarning("All your Lone.design plugins seem up to date.");
+                Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_SINGLE_PLUGIN_UP_TO_DATE, null, lastSingle) : MSG(MSG_PLUGIN_RESPONSE_ALL_PLUGINS_UP_TO_DATE));
             }
 
-            return;
         }
 
-        public static void RequestCallbackSingle(int code, string response)
-        {
-            RequestCallbackCommon(code, response, true);
-        }
+        public static void RequestCallbackSingle(int code, string response) => RequestCallbackCommon(code, response, true);
 
-        public static void RequestCallbackBulk(int code, string response)
-        {
-            RequestCallbackCommon(code, response, false);
-        }
+        public static void RequestCallbackBulk(int code, string response) => RequestCallbackCommon(code, response, false);
 
         public static string BuildRequestURLWhilePopulatingPluginList(string filterByName = default(string))
         {
@@ -334,7 +395,7 @@ namespace Oxide.Plugins
 
             string shortFilename;
 
-            for (int i = 0; i < iterateOver.Length; i++)
+            for (var i = 0; i < iterateOver.Length; i++)
             {
                 currentPlugin = iterateOver[i];
 
@@ -375,16 +436,16 @@ namespace Oxide.Plugins
             StringBuilderInstance.Clear();
             bool data = Instance.storedData.DoesItExistMessageId();
             Core.Libraries.RequestMethod requestMethod = data == false ? Core.Libraries.RequestMethod.PATCH : Core.Libraries.RequestMethod.POST;
-            string uri = data ? StringBuilderInstance.AppendFormat(DiscordMessageCrate, Instance.Configuration.WebHookForSendingNotificationsToDiscord).ToString() : StringBuilderInstance.AppendFormat(DiscordMessageUpdate, Instance.Configuration.WebHookForSendingNotificationsToDiscord, Instance.storedData.LastMessageId).ToString();
+            string uri = data ? StringBuilderInstance.AppendFormat(DISCORD_MSG_CREATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord).ToString() : StringBuilderInstance.AppendFormat(DISCORD_MSG_UPDATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord, Instance.storedData.LastMessageId).ToString();
             Instance.webrequest.Enqueue(uri,
                 new FancyMessage(null, new FancyMessage.Embeds[1] {
-                    new FancyMessage.Embeds("Lone Update Checker", 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields,
+                    new FancyMessage.Embeds(Instance.Title, 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields,
                     new Footer("lone.design", "https://lone.design/wp-content/uploads/2020/03/cropped-Blackwolf-32x32.png"),
                     new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png"))}).toJSON(), (code, response) =>
                     {
                         if (code == 200 && response != null)
                         {
-                            Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"] ?? string.Empty;
+                            Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"] ?? String.Empty;
                         }
                         else
                         {
@@ -394,7 +455,6 @@ namespace Oxide.Plugins
                     }, Instance,
             requestMethod, new Dictionary<string, string> { { "Content-Type", "application/json" } }, 10F);
         }
-
         public class FancyMessage
         {
             public string content { get; set; }
@@ -424,10 +484,7 @@ namespace Oxide.Plugins
                 this.embeds = embeds;
             }
 
-            public string toJSON()
-            {
-                return JsonConvert.SerializeObject(this);
-            }
+            public string toJSON() => JsonConvert.SerializeObject(this);
         }
 
         public class Footer
@@ -467,7 +524,7 @@ namespace Oxide.Plugins
         #region STATIC HELPERS
         public static VersionNumber VersionNumberFromString(string versionString)
         {
-            string[] split = versionString.Split('.');
+            var split = versionString.Split('.');
 
             if (split.Length != 3)
             {
@@ -495,10 +552,7 @@ namespace Oxide.Plugins
 
             return new VersionNumber(major, minor, patch);
         }
-        public static bool IsObjectNull(object obj)
-        {
-            return ReferenceEquals(obj, null);
-        }
+        public static bool IsObjectNull(object obj) => ReferenceEquals(obj, null);
         #endregion
 
         #region DATA
