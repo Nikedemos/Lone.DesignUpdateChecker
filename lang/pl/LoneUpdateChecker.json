@@ -1,6 +1,5 @@
 {
   "MSG_UPDATE_CHECK_FREQUENCY": "Aktualizacje będą sprawdzane co {0} minut(y)",
-  "MSG_CONFIG_GENERATING_DEFAULT": "Generowanie domyślnej konfiguracji...",
   "MSG_CONFIG_JUST_UPDATED": "Dokonano aktualizacji z wersji {0} do {1}!",
   "MSG_CONFIG_LOADING": "Ładowanie pliku konfiguracji...",
   "MSG_CONFIG_ERROR_FAILED_LOADING": "\nBŁĄD: NIE MOŻNA ODCZYTAĆ PLIKU KONFIGURACJI!\n{0}\n{1}\nRegenerowanie domyślnej konfiguracji...\n",
