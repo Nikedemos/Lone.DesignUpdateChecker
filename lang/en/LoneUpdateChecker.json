@@ -1,6 +1,5 @@
 {
   "MSG_UPDATE_CHECK_FREQUENCY": "The updates will be checked every {0} minute(s)",
-  "MSG_CONFIG_GENERATING_DEFAULT": "Generating default config...",
   "MSG_CONFIG_JUST_UPDATED": "It looks like you have just updated from {0} to {1}!",
   "MSG_CONFIG_LOADING": "Loading configuration file...",
   "MSG_CONFIG_ERROR_FAILED_LOADING": "\nERROR: COULD NOT READ THE CONFIG FILE!\n{0}\n{1}\nRe-generating default config...\n",
