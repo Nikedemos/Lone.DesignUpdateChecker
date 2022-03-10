@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone.Design Update Checker", "Nikedemos & DezLife", "1.2.1")]
+    [Info("Lone.Design Update Checker", "Nikedemos & DezLife", "1.2.2")]
     [Description("Checks for available updates of Lone.Design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
@@ -36,7 +36,6 @@ namespace Oxide.Plugins
 
         #region LANG
         public const string MSG_UPDATE_CHECK_FREQUENCY = nameof(MSG_UPDATE_CHECK_FREQUENCY);
-        public const string MSG_CONFIG_GENERATING_DEFAULT = nameof(MSG_CONFIG_GENERATING_DEFAULT);
         public const string MSG_CONFIG_JUST_UPDATED = nameof(MSG_CONFIG_JUST_UPDATED);
         public const string MSG_CONFIG_LOADING = nameof(MSG_CONFIG_LOADING);
         public const string MSG_CONFIG_ERROR_FAILED_LOADING = nameof(MSG_CONFIG_ERROR_FAILED_LOADING);
@@ -58,7 +57,6 @@ namespace Oxide.Plugins
         private static Dictionary<string, string> LangMessages = new Dictionary<string, string>
         {
             [MSG_UPDATE_CHECK_FREQUENCY] = "The updates will be checked every {0} minute(s)",
-            [MSG_CONFIG_GENERATING_DEFAULT] = "Generating default config...",
             [MSG_CONFIG_JUST_UPDATED] = "It looks like you have just updated from {0} to {1}!",
             [MSG_CONFIG_LOADING] = "Loading configuration file...",
             [MSG_CONFIG_ERROR_FAILED_LOADING] = "\nERROR: COULD NOT READ THE CONFIG FILE!\n{0}\n{1}\nRe-generating default config...\n",
@@ -184,7 +182,7 @@ namespace Oxide.Plugins
 
         protected override void LoadDefaultConfig()
         {
-            PrintWarning(MSG(MSG_CONFIG_GENERATING_DEFAULT));
+            PrintWarning("Generating default config...");
             Configuration = new ConfigData();
             SaveConfigData();
         }
@@ -227,7 +225,7 @@ namespace Oxide.Plugins
             {
                 Configuration = Config.ReadObject<ConfigData>();
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Instance.PrintError(MSG(MSG_CONFIG_ERROR_FAILED_LOADING, null, e.Message, e.StackTrace));
                 Configuration = new ConfigData();
@@ -356,9 +354,9 @@ namespace Oxide.Plugins
                 if (versionFromAPI > versionPresent)
                 {
                     StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_RESPONSE_OUTDATED_VERSION, null, currentInfo.PluginName, versionPresent, versionFromAPI));
-
+                    
                     outdatedPluginsFound++;
-                }
+                } 
             }
 
             StringBuilderInstance.AppendLine();
@@ -368,7 +366,7 @@ namespace Oxide.Plugins
                 if (Instance.Configuration.EnableSendingNotificationsToDiscord)
                     SendDiscordMessage(StringBuilderInstance.ToString(), single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
 
-                Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
+               Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
             }
             else
             {
@@ -418,7 +416,7 @@ namespace Oxide.Plugins
 
                 CurrentPluginVersions.Add(shortFilename, currentPlugin.Version);
 
-                if (i < iterateOver.Length - 1)
+                if (i < iterateOver.Length-1)
                 {
                     StringBuilderInstance.Append(",");
                 }
@@ -431,21 +429,21 @@ namespace Oxide.Plugins
         #region DISCORD
         public static void SendDiscordMessage(string message, string title)
         {
-            List<Fields> fields = new List<Fields> { new Fields(title, message, true), };
+            List<Fields> fields = new List<Fields> { new Fields(title, message, true),};
 
             StringBuilderInstance.Clear();
             bool data = Instance.storedData.DoesItExistMessageId();
             Core.Libraries.RequestMethod requestMethod = data == false ? Core.Libraries.RequestMethod.PATCH : Core.Libraries.RequestMethod.POST;
             string uri = data ? StringBuilderInstance.AppendFormat(DISCORD_MSG_CREATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord).ToString() : StringBuilderInstance.AppendFormat(DISCORD_MSG_UPDATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord, Instance.storedData.LastMessageId).ToString();
-            Instance.webrequest.Enqueue(uri,
-                new FancyMessage(null, new FancyMessage.Embeds[1] {
-                    new FancyMessage.Embeds(Instance.Title, 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields,
-                    new Footer("lone.design", "https://lone.design/wp-content/uploads/2020/03/cropped-Blackwolf-32x32.png"),
-                    new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png"))}).toJSON(), (code, response) =>
+            Instance.webrequest.Enqueue(uri, 
+                new FancyMessage(null, new FancyMessage.Embeds[1] { 
+                    new FancyMessage.Embeds(Instance.Title, 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields, 
+                    new Footer("lone.design", "https://lone.design/wp-content/uploads/2020/03/cropped-Blackwolf-32x32.png"), 
+                    new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png"))}).toJSON(), (code, response) => 
                     {
-                        if (code == 200 && response != null)
+                        if(code == 200 && response != null)
                         {
-                            Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"] ?? String.Empty;
+                            Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"];
                         }
                         else
                         {
@@ -457,16 +455,16 @@ namespace Oxide.Plugins
         }
         public class FancyMessage
         {
-            public string content { get; set; }
-            public Embeds[] embeds { get; set; }
+            public string content {get; set;}
+            public Embeds[] embeds {get; set;}
             public class Embeds
             {
-                public string title { get; set; }
-                public int color { get; set; }
+                public string title {get; set;}
+                public int color {get; set;}
                 public string timestamp { get; set; }
-                public List<Fields> fields { get; set; }
-                public Footer footer { get; set; }
-                public Thumbnail thumbnail { get; set; }
+                public List<Fields> fields {get; set;}
+                public Footer footer {get; set;}
+                public Thumbnail thumbnail { get; set;}
 
                 public Embeds(string title, int color, string timestamp, List<Fields> fields, Footer footer, Thumbnail thumbnail)
                 {
@@ -489,8 +487,8 @@ namespace Oxide.Plugins
 
         public class Footer
         {
-            public string text { get; set; }
-            public string icon_url { get; set; }
+            public string text {get; set;}
+            public string icon_url {get; set;}
             public Footer(string text, string icon_url)
             {
                 this.text = text;
@@ -509,9 +507,9 @@ namespace Oxide.Plugins
 
         public class Fields
         {
-            public string name { get; set; }
-            public string value { get; set; }
-            public bool inline { get; set; }
+            public string name {get; set;}
+            public string value {get; set;}
+            public bool inline {get; set;}
             public Fields(string name, string value, bool inline)
             {
                 this.name = name;
