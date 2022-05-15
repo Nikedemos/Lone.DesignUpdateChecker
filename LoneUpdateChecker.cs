@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone.Design Update Checker", "Nikedemos & DezLife", "1.2.2")]
+    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.2.3")]
     [Description("Checks for available updates of Lone.Design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
@@ -78,7 +78,7 @@ namespace Oxide.Plugins
 
         private static string MSG(string msg, string userID = null, params object[] args)
         {
-            if (args == null)
+            if (args.Length == 0)
             {
                 return Instance.lang.GetMessage(msg, Instance, userID);
             }
@@ -330,6 +330,8 @@ namespace Oxide.Plugins
             StringBuilderInstance.AppendLine();
 
             string lastSingle = "";
+            string lastVersionPresent = "";
+            string lastVersionFromAPI = "";
 
             for (var i = 0; i < RecentApiResponse.Count; i++)
             {
@@ -344,6 +346,8 @@ namespace Oxide.Plugins
                 versionFromAPI = VersionNumberFromString(currentInfo.Version);
 
                 lastSingle = currentInfo.PluginName;
+                lastVersionPresent = versionPresent.ToString();
+                lastVersionFromAPI = versionFromAPI.ToString();
 
                 if (versionFromAPI == InvalidVersionNumber)
                 {
@@ -364,9 +368,9 @@ namespace Oxide.Plugins
             {
                 Instance.PrintError(StringBuilderInstance.ToString().Replace("*", string.Empty));
                 if (Instance.Configuration.EnableSendingNotificationsToDiscord)
-                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
+                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle, lastVersionPresent, lastVersionFromAPI) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
 
-               Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
+               Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle, lastVersionPresent, lastVersionFromAPI) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
             }
             else
             {
