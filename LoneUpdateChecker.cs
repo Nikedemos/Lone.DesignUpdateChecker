@@ -10,12 +10,12 @@ using System.Text;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.2.3")]
+    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.2.4")]
     [Description("Checks for available updates of Lone.Design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
         #region CONST/STATIC
-        public const string API_URL = "https://api.lone.design/";
+        public const string API_URL = "https://api.lone.design/plugins.json";
 
         public const string DISCORD_MSG_UPDATE = "{0}/messages/{1}";
         public const string DISCORD_MSG_CREATE = "{0}?wait=true";
@@ -259,11 +259,11 @@ namespace Oxide.Plugins
 
         public struct ApiPluginInfo
         {
-            public string Name;
+            public string name;
 
-            public string PluginName;
+            public string filename;
 
-            public string Version;
+            public string version;
         }
 
         public static void RequestSend(string requestPlugins = default(string))
@@ -282,10 +282,9 @@ namespace Oxide.Plugins
             }
 
             RecentApiResponse = null;
-
-            string requestURL = BuildRequestURLWhilePopulatingPluginList(requestPlugins);
-
-            Instance.webrequest.Enqueue(requestURL, string.Empty, callback, Instance, Core.Libraries.RequestMethod.GET, null, 10F);
+            BuildRequestURLWhilePopulatingPluginList(requestPlugins);
+            
+            Instance.webrequest.Enqueue(API_URL, string.Empty, callback, Instance, Core.Libraries.RequestMethod.GET, null, 10F);
         }
 
         public static void RequestCallbackCommon(int code, string response, bool single)
@@ -305,7 +304,7 @@ namespace Oxide.Plugins
                 Instance.PrintError(MSG(MSG_PLUGIN_DESERIALIZATION_ERROR, null, code, response, e.Message, e.StackTrace));
                 return;
             }
-
+            
             if (RecentApiResponse.Count == 0)
             {
                 if (!single)
@@ -337,27 +336,27 @@ namespace Oxide.Plugins
             {
                 currentInfo = RecentApiResponse[i];
 
-                if (!CurrentPluginVersions.ContainsKey(currentInfo.PluginName))
+                if (!CurrentPluginVersions.ContainsKey(currentInfo.filename))
                 {
                     continue;
                 }
 
-                versionPresent = CurrentPluginVersions[currentInfo.PluginName];
-                versionFromAPI = VersionNumberFromString(currentInfo.Version);
+                versionPresent = CurrentPluginVersions[currentInfo.filename];
+                versionFromAPI = VersionNumberFromString(currentInfo.version);
 
-                lastSingle = currentInfo.PluginName;
+                lastSingle = currentInfo.filename;
                 lastVersionPresent = versionPresent.ToString();
                 lastVersionFromAPI = versionFromAPI.ToString();
 
                 if (versionFromAPI == InvalidVersionNumber)
                 {
-                    StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_REPONSE_INVALID_VERSION, null, currentInfo.PluginName, currentInfo.Version));
+                    StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_REPONSE_INVALID_VERSION, null, currentInfo.filename, currentInfo.version));
                     continue;
                 }
 
                 if (versionFromAPI > versionPresent)
                 {
-                    StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_RESPONSE_OUTDATED_VERSION, null, currentInfo.PluginName, versionPresent, versionFromAPI));
+                    StringBuilderInstance.AppendLine(MSG(MSG_PLUGIN_RESPONSE_OUTDATED_VERSION, null, currentInfo.filename, versionPresent, versionFromAPI));
                     
                     outdatedPluginsFound++;
                 } 
@@ -383,12 +382,8 @@ namespace Oxide.Plugins
 
         public static void RequestCallbackBulk(int code, string response) => RequestCallbackCommon(code, response, false);
 
-        public static string BuildRequestURLWhilePopulatingPluginList(string filterByName = default(string))
+        public static void BuildRequestURLWhilePopulatingPluginList(string filterByName = default(string))
         {
-            StringBuilderInstance.Clear();
-            StringBuilderInstance.Append(API_URL);
-            StringBuilderInstance.Append("search/");
-
             CurrentPluginVersions.Clear();
 
             Plugin[] iterateOver = Interface.Oxide.RootPluginManager.GetPlugins().ToArray();
@@ -415,18 +410,8 @@ namespace Oxide.Plugins
                         continue;
                     }
                 }
-
-                StringBuilderInstance.Append(shortFilename);
-
                 CurrentPluginVersions.Add(shortFilename, currentPlugin.Version);
-
-                if (i < iterateOver.Length-1)
-                {
-                    StringBuilderInstance.Append(",");
-                }
             }
-
-            return StringBuilderInstance.ToString();
         }
         #endregion
 
