@@ -8,10 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.3.0")]
+    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.3.3")]
     [Description("Checks for available updates of Lone.Design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
@@ -160,7 +161,7 @@ namespace Oxide.Plugins
             {
                 var everyMinute = Configuration.HowManyMinutesBetweenPeriodicalUpdates;
                 Instance.PrintWarning(MSG(MSG_UPDATE_CHECK_FREQUENCY, null, everyMinute));
-                RequestTimer = timer.Repeat(everyMinute * 60F, 14400, () => RequestSend());
+                RequestTimer = timer.Repeat(30f, 14400, () => RequestSend());
             }
         }
 
@@ -585,7 +586,7 @@ namespace Oxide.Plugins
             {
                 Instance.PrintError(StringBuilderInstance.ToString().Replace("*", string.Empty));
                 if (Instance.Configuration.EnableSendingNotificationsToDiscord)
-                    SendDiscordMessage(StringBuilderInstance.ToString(), single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle, lastVersionPresent, lastVersionFromAPI) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
+                    SendOrUpdateDiscordMessage(StringBuilderInstance.ToString(), single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle, lastVersionPresent, lastVersionFromAPI) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
 
                 Instance.PrintWarning(single ? MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_SINGLE, null, lastSingle, lastVersionPresent, lastVersionFromAPI) : MSG(MSG_PLUGIN_RESPONSE_NEEDS_UPDATE_BULK));
             }
@@ -672,31 +673,62 @@ namespace Oxide.Plugins
         #endregion
 
         #region DISCORD
-        public static void SendDiscordMessage(string message, string title)
+
+        public static void SendOrUpdateDiscordMessage(string message, string title)
+        {
+            string embeds = GenerateEmbeds(message, title);
+            StringBuilderInstance.Clear();
+            bool data = Instance.storedData.DoesItExistMessageId();
+            if (data)
+            {
+                Instance.webrequest.Enqueue(StringBuilderInstance.AppendFormat(DISCORD_MSG_CREATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord).ToString(), embeds
+                    , (code, response) =>
+                    {
+
+                        if (code == 404)
+                        {
+                            Instance.PrintWarning("Create message returned 404. Please confirm webhook url in config is correct.");
+                            return;
+                        }
+
+                        if (response == null)
+                        {
+                            Instance.PrintWarning($"Created message returned null. Code: {code}");
+                            return;
+                        }
+
+                        Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"];
+                        Interface.Oxide.DataFileSystem.WriteObject(Instance.Name, Instance.storedData);
+
+                    }, Instance,
+                    Core.Libraries.RequestMethod.POST, new Dictionary<string, string> { { "Content-Type", "application/json" } }, 10F);
+            }
+            else
+            {
+                Instance.webrequest.Enqueue(
+                    StringBuilderInstance.AppendFormat(DISCORD_MSG_UPDATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord, Instance.storedData.LastMessageId).ToString(),
+                    embeds, (code, response) =>
+                    {
+                        if (code != 200)
+                        {
+                            Instance.storedData.LastMessageId = string.Empty;
+                            SendOrUpdateDiscordMessage(message, title);
+                        }
+                    }, Instance,
+                    Core.Libraries.RequestMethod.PATCH, new Dictionary<string, string> { { "Content-Type", "application/json" } }, 10F);
+            }
+        }
+
+        private static string GenerateEmbeds(string message, string title)
         {
             List<Fields> fields = new List<Fields> { new Fields(title, message, true), };
 
-            StringBuilderInstance.Clear();
-            bool data = Instance.storedData.DoesItExistMessageId();
-            Core.Libraries.RequestMethod requestMethod = data == false ? Core.Libraries.RequestMethod.PATCH : Core.Libraries.RequestMethod.POST;
-            string uri = data ? StringBuilderInstance.AppendFormat(DISCORD_MSG_CREATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord).ToString() : StringBuilderInstance.AppendFormat(DISCORD_MSG_UPDATE, Instance.Configuration.WebHookForSendingNotificationsToDiscord, Instance.storedData.LastMessageId).ToString();
-            Instance.webrequest.Enqueue(uri,
-                new FancyMessage(null, new FancyMessage.Embeds[1] {
-                    new FancyMessage.Embeds(Instance.Title, 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields,
+           return new FancyMessage(null, new FancyMessage.Embeds[1]
+            {
+                new FancyMessage.Embeds(Instance.Title, 2105893, DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"), fields,
                     new Footer("lone.design", "https://lone.design/wp-content/uploads/2020/03/cropped-Blackwolf-32x32.png"),
-                    new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png"))}).toJSON(), (code, response) =>
-                    {
-                        if (code == 200 && response != null)
-                        {
-                            Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"];
-                        }
-                        else
-                        {
-                            Instance.storedData.LastMessageId = string.Empty;
-                            SendDiscordMessage(message, title);
-                        }
-                    }, Instance,
-            requestMethod, new Dictionary<string, string> { { "Content-Type", "application/json" } }, 10F);
+                    new Thumbnail("https://lone.design/wp-content/uploads/2022/01/update-checker-logo.png"))
+            }).toJSON();
         }
         public class FancyMessage
         {
