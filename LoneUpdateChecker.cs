@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.3.3")]
+    [Info("Lone.Design Update Checker", "Nikedemos / DezLife / nivex", "1.3.4")]
     [Description("Checks for available updates of Lone.Design plugins")]
     public class LoneUpdateChecker : RustPlugin
     {
@@ -697,7 +697,7 @@ namespace Oxide.Plugins
                             return;
                         }
 
-                        Instance.storedData.LastMessageId = (string)JObject.Parse(response)["id"];
+                        Instance.storedData.LastMessageId = (string)JObject.Parse(response)?["id"] ?? string.Empty;
                         Interface.Oxide.DataFileSystem.WriteObject(Instance.Name, Instance.storedData);
 
                     }, Instance,
